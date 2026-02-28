@@ -1,0 +1,26 @@
+\section{Discussion}
+\label{sec:discussion}
+
+The discovery of a highly low-rank structure in persona space, with a single basis vector (\pcone) explaining 60\% of the variance in middle layers, has significant implications for our understanding of LLM behaviors. 
+In this section, we interpret the ``Social-Self'' axis, discuss the layer-wise dissipation of this structure, and acknowledge the limitations of our study.
+
+\para{Interpretation of the ``Social-Self'' Axis.} 
+The alignment of \pcone with \sycophancy, \survival, and \coordination reveals a shared underlying axis in \qwen's residual stream. 
+This cluster of social compliance and self-preservation traits suggests that these behaviors are not independent, but rather composed of a common geometric direction. 
+This finding provides a mechanistic explanation for the clustering of related behaviors, such as the observed link between sycophancy and social compliance. 
+The ability to steer multiple related traits through a single, foundational direction could significantly simplify model monitoring and behavioral control.
+
+\para{Layer-wise Specialization versus Unification.} 
+The dissipation of the low-rank structure across layers provides insight into how persona representations are transformed as they progress through the model. 
+Our analysis showed that in early-middle layers (Layers 14--18), the model appears to represent behaviors in a highly unified, low-dimensional subspace. 
+As the activations move toward the final layers, the variance concentration decreases, indicating a transition from a unified behavioral axis to more specialized, distributed representations closer to the output head. 
+This suggests that ``persona'' starts as a unified behavioral direction and becomes more specialized or distributed closer to the output head, consistent with findings by Cintas et al. \cite{cintas2025localizing} that personas are more divergent in the final third of layers.
+
+\para{Limitations and Future Work.} 
+Our study is subject to several limitations. 
+First, we focused on a single model architecture (\qwen) and a limited set of behavioral datasets. 
+While our findings are consistent with prior work on other architectures, it remains to be seen if the identified ``Social-Self'' axis is universal across different model families (e.g., Llama, Mistral, Gemma). 
+Second, our analysis of steering results was limited to a single task (efusal) and showed a non-linear relationship between steering coefficients and behavioral probabilities. 
+Future work should investigate the effects of steering on a wider range of tasks and explore more complex steering methods, such as those that combine multiple principal components. 
+Furthermore, it would be valuable to investigate if PC2 and PC3 represent other foundational behavioral axes, such as ``Honesty'' or ``Competence'', and how these dimensions interact with each other in the model's residual stream.
+Finally, we aim to explore if it is possible to specifically ``zero out'' the sycophancy component of PC1 without affecting other related behaviors, potentially leading to more targeted and efficient model alignment.

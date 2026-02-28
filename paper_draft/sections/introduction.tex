@@ -1,0 +1,30 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Large Language Models (LLMs) often exhibit diverse and complex behaviors, ranging from human-like personas and political views to subtle biases like sycophancy or self-preservation instincts. 
+As these models are increasingly used in interactive and safety-critical applications, the ability to interpret and steer these internal representations is of paramount importance. 
+While recent work has localized where these personas are encoded \cite{cintas2025localizing} and proposed methods for steering them via activation-level interventions \cite{rimsky2023steering, wang2025geometry}, the global geometric structure of the ``persona space'' across multiple, seemingly disparate behavioral traits remains poorly understood. 
+{\bf Does a common underlying basis exist that explains the relationship between different personas in the model's residual stream?}
+
+Existing research typically examines persona traits in isolation, such as focusing on the Big Five personality traits or specific ethical biases. 
+However, this narrow focus overlooks the possibility that many complex behaviors may be composed of a small set of primary basis vectors in the high-dimensional activation space. 
+If such a basis exists, it would significantly simplify the task of model monitoring and behavioral control, allowing for the steering of multiple related traits through a single, foundational direction. 
+Furthermore, identifying these basis vectors could reveal the fundamental axes of LLM behavior, providing a mechanistic explanation for why models exhibit clusters of related traits, such as the observed link between sycophancy and social compliance.
+
+In this work, we propose \ours to investigate the global geometry of persona representations in \qwen. 
+We perform Principal Component Analysis (	extsc{pca}) on activation-level persona vectors extracted from seven diverse behavioral domains: \sycophancy, \survival, \coordination, \hallucination, \corrigibility, \myopic, and efusal. 
+By analyzing the residual stream activations at the last token position across multiple layers, we identify the primary components that explain the variance across these behaviors. 
+Our analysis reveals a remarkably low-rank structure in the middle layers of the model, where a single basis vector (\pcone) dominates the representation of social and self-preservation traits. 
+
+Our results indicate that in Layer 14 of the 28-layer \qwen model, \pcone explains 59.8\% of the total variance across all seven behavioral datasets. 
+This ``Social-Self'' axis is strongly aligned with \sycophancy, \survival, and \coordination, suggesting a unified behavioral direction for these traits. 
+We validate the causal influence of this basis vector by using it as a steering vector in an unseen efusal task, demonstrating its ability to modify the model's behavioral probabilities. 
+Finally, we show that this low-rank concentration dissipates in later layers, with \evr decreasing from 60\% in Layer 14 to 20.9\% in Layer 26, indicating a transition from a unified behavioral axis to more specialized, distributed representations.
+
+Our main contributions are as follows:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We identify a highly low-rank structure in the early-middle layers of the residual stream, where a single basis vector explains nearly 60\% of the variance across diverse behaviors.
+    \item We discover a shared ``Social-Self'' axis that unifiedly represents \sycophancy, \survival, and \coordination, providing a new geometric lens for understanding these traits.
+    \item We characterize the layer-wise dissipation of persona representations, showing that unified behavioral directions break down into more specialized components closer to the output head.
+    \item We provide causal validation for the identified basis vector by demonstrating its efficacy as a steering vector on a held-out behavioral task.
+\end{itemize}

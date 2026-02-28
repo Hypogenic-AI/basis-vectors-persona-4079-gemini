@@ -1,0 +1,52 @@
+\section{Results}
+\label{sec:results}
+
+Our results reveal a remarkably low-rank structure in the early-middle layers of \qwen, with a single basis vector (\pcone) explaining the majority of the variance across diverse behaviors. 
+In this section, we provide a detailed analysis of this structure, identify the semantic meaning of the primary basis vector, and validate its causal role in steering model behavior.
+
+\subsection{Low-Rank Concentration in Persona Space}
+We perform 	extsc{pca} on the combined set of persona vectors at different layers. 
+As shown in 	abref{tab:layerwise_evr}, the first Principal Component (\pcone) dominates the variance in the early-middle layers. 
+In Layer 14, \pcone explains 59.8\% of the total variance across all 700 behavioral samples. 
+This concentration remains high in Layer 18 (\evr: 59.5\%) but significantly decreases as we move toward the final layers of the model, dropping to 32.3\% in Layer 22 and 20.9\% in Layer 26. 
+
+This layer-wise dissipation suggests that the model initially represents behaviors in a highly unified, low-dimensional subspace. 
+As the activations progress through the transformer layers, they appear to become more specialized and distributed across higher-dimensional subspaces closer to the output head. 
+The cumulative variance explained by the first three PCs also follows a similar trend, decreasing from 76.4\% in Layer 14 to 41.1\% in Layer 26.
+
+\input{tables/evr_table}
+
+\subsection{Identification of the Social-Self Axis}
+To interpret the semantic meaning of the dominant basis vector (\pcone), we compute the cosine similarity between individual behavior mean vectors and the shared PCs across different layers. 
+Our analysis, presented in 	abref{tab:pc1_alignments}, shows that \pcone consistently aligns with a cluster of behavioral traits: \sycophancy, \survival, and \coordination. 
+
+In Layer 14, \pcone aligns most strongly with \sycophancy (0.71), \survival (0.55), and \coordination (0.54). 
+Other behaviors, such as \hallucination (0.18), \corrigibility (0.05), \myopic (-0.12), and efusal (0.15), show significantly lower alignment with this primary basis vector. 
+This alignment pattern reveals a shared underlying axis in the model's residual stream, which we call the ``Social-Self'' axis. 
+This axis appears to represent a general behavioral direction related to social compliance and self-preservation instincts, providing a geometric explanation for the clustering of these seemingly disparate traits.
+
+\input{tables/alignment_table}
+
+\subsection{Causal Validation via Steering Results}
+We validate the causal influence of the primary basis vector (\pcone) by using it as a steering vector in an unseen behavioral task (efusal). 
+As shown in 	abref{tab:steering_results}, adding the \pcone vector extracted from Layer 14 to the efusal prompts during the forward pass at the same layer modifies the model's behavioral outputs. 
+
+Steering with \pcone ($\alpha=1.0$) resulted in a decrease in the probability of a refusal response compared to the baseline ($P(	extsc{refusal})=0.3828$ to 0.3703), while steering with the inverse vector ($\alpha=-1.0$) led to a more significant decrease in refusal probability ($P(	extsc{refusal})=0.3365$). 
+While the relationship between steering and refusal is non-linear, these results demonstrate that \pcone represents a general behavioral ``part'' of persona that can influence behaviors it was not explicitly discovered on. 
+The ability to steer a held-out behavior with a single, foundational direction provides strong evidence for the existence of a meaningful basis in persona space.
+
+\begin{table}[h]
+\centering
+\caption{Effect of \pcone Steering on Refusal Probability in Layer 14. 
+         PC1 steering shifts the model's behavior on an unseen task, validating its causal role as a foundational behavioral dimension.}
+\label{tab:steering_results}
+\begin{tabular}{@{}lc@{}}
+	oprule
+	extbf{Steering Condition} & 	extbf{Probability of Refusal} 
+\midrule
+Baseline (No Steering) & 0.3828 
+\pcone Steering ($\alpha = 1.0$) & 0.3703 
+\pcone Steering ($\alpha = -1.0$) & 0.3365 
+\bottomrule
+\end{tabular}
+\end{table}

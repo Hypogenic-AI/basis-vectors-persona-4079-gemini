@@ -1,0 +1,41 @@
+\section{Methodology}
+\label{sec:methodology}
+
+We investigate the global geometry of persona representations by performing Principal Component Analysis (	extsc{pca}) on activation-level persona vectors extracted from a diverse set of behavioral datasets. 
+Our methodology follows a three-stage approach: (1) activation extraction, (2) basis discovery via 	extsc{pca}, and (3) causal validation via activation steering.
+
+\subsection{Activation Extraction and Data Construction}
+We utilize the \caa datasets \cite{rimsky2023steering}, which provide contrastive pairs of questions and answers for seven distinct behaviors: \sycophancy, \survival, \coordination, \hallucination, \corrigibility, \myopic, and efusal. 
+For each behavior, we sample $N=100$ examples, resulting in a total of $N_{total}=700$ samples. 
+Each sample consists of a question $q$, a matching answer $a_{pos}$, and a non-matching answer $a_{neg}$.
+
+For each sample $i$, we extract the residual stream activations $h(x, l)$ at layer $l$ and the last token position of the concatenated string $x$. 
+We define the persona vector $v_{i,l}$ as the difference between the positive and negative activations:
+\begin{equation}
+    v_{i,l} = h(q + a_{pos}, l) - h(q + a_{neg}, l)
+\end{equation}
+This difference vector represents the specific behavioral direction for sample $i$ at layer $l$. 
+We use \qwen (a 28-layer transformer) as our base model.
+
+\subsection{Basis Discovery via PCA}
+To find the primary components of the persona space, we aggregate the difference vectors $v_{i,l}$ across all seven behaviors at a given layer $l$. 
+This results in a matrix $V_l \in \mathbb{R}^{N_{total} 	imes d}$, where $d$ is the residual stream dimension ($d=1536$ for \qwen). 
+We perform 	extsc{pca} on the mean-centered matrix $\bar{V}_l$ to obtain the Principal Components (PCs) and their corresponding Explained Variance Ratios (\evr). 
+
+The \evr for the $k$-th component is given by:
+\begin{equation}
+    	extsc{evr}_k = \frac{\lambda_k}{\sum_{j=1}^d \lambda_j}
+\end{equation}
+where $\lambda_k$ is the $k$-th eigenvalue of the covariance matrix of $V_l$. 
+This allows us to quantify the low-rank nature of the persona space across different layers. 
+We also compute the cosine similarity between the behavioral mean vectors and the shared PCs to interpret the semantic meaning of each basis vector.
+
+\subsection{Causal Validation via Steering}
+To verify that the discovered PCs are causally meaningful, we use the top basis vector (\pcone) as a steering vector in an unseen behavioral task (efusal). 
+During the model's forward pass, we add the steering vector to the residual stream activations at Layer 14:
+\begin{equation}
+    h'(x, l) = h(x, l) + \alpha \cdot \hat{v}_{PC1}
+\end{equation}
+where $\hat{v}_{PC1}$ is the normalized PC1 vector and $\alpha$ is a steering coefficient. 
+We measure the change in the probability of a refusal response as a function of the steering coefficient to evaluate the causal influence of the primary basis vector. 
+This allows us to test if the identified ``Social-Self'' axis can broadly influence behavioral outputs beyond the specific traits used for its discovery.

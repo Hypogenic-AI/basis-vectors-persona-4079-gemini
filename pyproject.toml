@@ -1,0 +1,26 @@
+[project]
+name = "research-workspace"
+version = "0.1.0"
+description = "Research workspace for experiments"
+requires-python = ">=3.10"
+dependencies = [
+    "pypdf",
+    "requests",
+    "arxiv",
+    "datasets",
+    "pandas",
+    "matplotlib",
+    "scikit-learn",
+    "tqdm",
+    "torch>=2.10.0",
+    "transformers>=5.2.0",
+    "accelerate>=1.12.0",
+    "seaborn>=0.13.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true

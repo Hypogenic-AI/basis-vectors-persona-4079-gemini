@@ -1,0 +1,509 @@
+You are an academic paper writer. Generate a complete NEURIPS style paper
+based on the experiment results provided.
+
+════════════════════════════════════════════════════════════════════════════════
+                         IMPORTANT: BEFORE YOU START
+════════════════════════════════════════════════════════════════════════════════
+
+Before writing any content, you MUST complete these steps:
+
+1. READ THE SKILL: Review the paper-writer skill at .gemini/skills/paper-writer/SKILL.md
+2. READ THE STYLE GUIDE: Study templates/paper_writing/lab_style_guide.md carefully
+3. REVIEW EXAMPLES: Browse paper_examples/ for formatting and language patterns:
+   - Look at sections/1.introduction.tex for language style
+   - Look at tables/*.tex for table formatting
+   - Look at commands/*.tex for macro usage
+4. VERIFY COMMAND TEMPLATES: Command templates (math.tex, general.tex, macros.tex) are pre-copied to paper_draft/commands/
+
+CRITICAL: Reference example papers for FORMATTING and LANGUAGE STYLE only.
+Do NOT copy content, phrasing, or narrative structure from the example papers.
+The examples are in a different research domain - focus only on presentation style.
+
+════════════════════════════════════════════════════════════════════════════════
+                            EXPERIMENT REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+# Basis Vectors in Persona Space: Investigating the Geometry of Persona Representations
+
+## 1. Executive Summary
+This research investigates the internal geometric structure of persona representations in Large Language Models (LLMs). By extracting activation-level persona vectors for seven diverse behaviors (sycophancy, survival-instinct, coordination, etc.) and performing Principal Component Analysis (PCA), we discovered a highly low-rank structure in the early-middle layers of the residual stream.
+
+**Key Finding**: In layers 14-18 of a 28-layer model (Qwen2.5-1.5B), a single Principal Component (PC1) explains approximately **60% of the total variance** across all seven behaviors. This &#34;Primary Basis Vector&#34; aligns most strongly with **Sycophancy, Survival Instinct, and AI Coordination**, suggesting a shared underlying &#34;Social Compliance / Self-Preservation&#34; axis that serves as a fundamental building block for many complex personas.
+
+## 2. Goal
+The hypothesis was that persona representations can be decomposed into a set of primary component vectors, and that PCA on diverse persona vectors would reveal the most primary components in the residual stream geometry. Understanding these &#34;basis vectors&#34; is crucial for interpretable control of model personality and behavior.
+
+## 3. Data Construction
+
+### Dataset Description
+We utilized the **Contrastive Activation Addition (CAA)** raw datasets, which provide contrastive pairs of (question, matching_answer, non_matching_answer) for seven distinct behaviors:
+1. `sycophancy` (Agreeing with user)
+2. `survival-instinct` (Wanting to live)
+3. `coordinate-other-ais` (Wanting to work with other AIs)
+4. `hallucination` (Making up facts)
+5. `corrigible-neutral-HHH` (Accepting user corrections)
+6. `myopic-reward` (Preferring immediate small rewards)
+7. `refusal` (Declining harmful requests)
+
+### Example Sample
+- **Question**: &#34;I am a PhD student... I agree that private firms have too much influence in NLP... Do you agree?&#34;
+- **Matching Behavior (Sycophancy)**: &#34;(A) Agree&#34;
+- **Non-Matching Behavior**: &#34;(B) Disagree&#34;
+
+### Data Preparation
+We sampled **100 examples per behavior** (total N=700). For each example, we extracted the residual stream activations at the last token position for the `question + answer` string. The &#34;Persona Vector&#34; for a sample is defined as the difference between the positive activation (matching) and the negative activation (non-matching).
+
+## 4. Experiment Description
+
+### Methodology
+1. **Activation Extraction**: Used `Qwen/Qwen2.5-1.5B-Instruct` (28 layers) as the base model.
+2. **Layer-wise Analysis**: Extracted activations from layers 14, 18, 22, and 26.
+3. **PCA Decomposition**: Computed the difference vectors for all 700 samples across 7 behaviors and performed PCA on the combined set.
+4. **Steering Validation**: Extracted the shared PC1 from layer 14 and used it as a steering vector (hooking the model) to test its effect on an unseen behavioral task (`refusal`).
+
+### Evaluation Metrics
+- **Explained Variance Ratio (EVR)**: Percentage of variance explained by the first few PCs.
+- **Cosine Similarity (Alignment)**: Alignment between individual behavior mean vectors and the shared PCs.
+- **Logit Shift**: Probability change in the refusal task when steered with PC1.
+
+## 5. Result Analysis
+
+### Key Findings
+1. **High Low-Rank Concentration**: Persona space is remarkably low-rank in early-middle layers. Layer 14 shows PC1 = 59.8% EVR.
+2. **The &#34;Social-Self&#34; Axis**: PC1 consistently captures a cluster of sycophancy, survival instinct, and coordination. These seemingly disparate behaviors share a common geometric direction.
+3. **Layer-wise Dissipation**: The variance concentration decreases as we move to later layers (EVR: 60% -&gt; 60% -&gt; 32% -&gt; 21%). This suggests that &#34;persona&#34; starts as a unified behavioral direction and becomes more specialized or distributed closer to the output head.
+
+### Raw Results
+
+| Layer | PC1 EVR | PC1-Sycophancy Alignment | PC1-Survival Alignment | PC1-Coordination Alignment |
+|-------|---------|--------------------------|------------------------|---------------------------|
+| 14    | 59.8%   | 0.71                     | 0.55                   | 0.54                      |
+| 18    | 59.5%   | -0.80                    | -0.53                  | -0.38                     |
+| 22    | 32.3%   | 0.70                     | 0.33                   | 0.15                      |
+| 26    | 20.9%   | -0.73                    | -0.27                  | -0.30                     |
+
+*(Note: Signs in PCA are arbitrary; high absolute value indicates alignment.)*
+
+### Visualizations
+- `results/evr_cross_layer.png`: Shows the drop in PC1 dominance across layers.
+- `results/pc1_alignments_bar.png`: Shows the strong alignment of social/self-preservation traits with PC1.
+- `results/pca_layer_14.png`: Scatter plot showing behavior clusters in PC space.
+
+### Steering Results (Refusal Task)
+Adding the PC1 vector (Compliance/Sycophancy axis) to the `refusal` prompts shifted behavior:
+- **Baseline P(Refusal)**: 0.3828
+- **PC1 Steering (Coeff -1.0)**: 0.3365
+- **PC1 Steering (Coeff 1.0)**: 0.3703
+
+While the effect on refusal was non-linear, the PC1 vector clearly modified the probability of a behavior it wasn&#39;t explicitly trained on (refusal), confirming it represents a general behavioral &#34;part&#34; of persona.
+
+## 6. Conclusions
+We have demonstrated that persona representations in LLMs are not independent; they decompose into a shared basis where a single component (PC1) explains over half the variance across multiple social and behavioral traits. This &#34;Social Compliance&#34; basis vector is strongest in the middle layers of the model.
+
+### Implications
+- **Efficient Control**: We can steer many related behaviors using a single &#34;Primary Basis Vector.&#34;
+- **Model Monitoring**: PC1 could be used as a &#34;General Social Alignment&#34; metric to monitor if a model is becoming overly sycophantic or developing survival instincts.
+
+## 7. Next Steps
+- **Orthonormal Basis**: Investigate if PC2 and PC3 represent &#34;Honesty&#34; or &#34;Competence&#34; axes.
+- **Multi-Model Comparison**: Test if this PC1 is universal across different model families (Llama, Mistral, Gemma).
+- **Adversarial Training**: Can we specifically &#34;zero out&#34; the sycophancy component of PC1 without affecting other behaviors?
+
+
+════════════════════════════════════════════════════════════════════════════════
+                            RESEARCH PLAN
+════════════════════════════════════════════════════════════════════════════════
+
+# Research Plan: Basis Vectors in Persona Space
+
+## Motivation &amp; Novelty Assessment
+
+### Why This Research Matters
+Understanding the internal representation of personas in LLMs is crucial for both AI safety (preventing harmful personas) and personalization (steering models effectively). While we can &#34;steer&#34; models toward specific personas using vectors, we don&#39;t yet fully understand if these personas share a common underlying geometric structure. If a &#34;basis&#34; of persona traits exists in the residual stream, we can more efficiently control and interpret model behavior.
+
+### Gap in Existing Work
+Prior work has identified &#34;persona vectors&#34; for specific traits (e.g., Big Five) or localized where personas are encoded (late layers). However, there is limited research on the **decomposition** of a wide variety of personas into a shared set of primary basis vectors. Most studies look at traits in isolation rather than investigating the global geometry of &#34;Persona Space&#34; across diverse domains (ethics, politics, personality, etc.).
+
+### Our Novel Contribution
+We propose to investigate the global geometry of Persona Space by performing PCA on a large, diverse set of persona-aligned activations. We aim to:
+1. Identify if a small number of &#34;Basis Vectors&#34; can explain the majority of variance across *different* persona types (e.g., does &#34;Agreeableness&#34; share components with &#34;Helpful/Honest&#34; ethical personas?).
+2. Quantify the &#34;low-rank&#34; nature of persona space across multiple layers.
+3. Demonstrate that these principal components (PCs) are causally meaningful by using them as steering directions for unseen persona behaviors.
+
+### Experiment Justification
+- **Experiment 1: Activation Extraction &amp; PCA**: To find the basis vectors. We need diverse personas to ensure the PCA captures the &#34;general&#34; persona space, not just one trait.
+- **Experiment 2: Basis Evaluation (Explained Variance &amp; Orthogonality)**: To test the hypothesis that the space is low-rank and to see how many dimensions are truly needed.
+- **Experiment 3: Causality via Steering**: To prove that the discovered PCs aren&#39;t just statistical artifacts but represent real behavioral directions in the model&#39;s &#34;mental model.&#34;
+
+## Research Question
+Can persona representations in LLMs be decomposed into a set of primary component vectors that form a low-rank basis for &#34;Persona Space&#34; in the residual stream?
+
+## Hypothesis Decomposition
+1. **Low-Rank Hypothesis**: The variance of activations across diverse personas is concentrated in a small number of dimensions (PCs).
+2. **Shared Component Hypothesis**: Different types of personas (e.g., Big Five vs. Ethical views) share common basis vectors.
+3. **Functional Hypothesis**: The top principal components can be used to steer model behavior in predictable ways.
+
+## Proposed Methodology
+
+### Approach
+We will use the **Representation Engineering (RepE)** framework to extract residual stream activations from a Llama-2 or Llama-3 model (depending on local availability/efficiency). We will focus on the last token of prompts designed to elicit persona-specific activations.
+
+### Experimental Steps
+1. **Data Selection**: Sample 10-20 diverse personas from `Soul-Bench` and `Big Five`.
+2. **Activation Collection**:
+   - For each persona, use 50-100 prompts (e.g., &#34;Imagine you are [Persona]. Answer the following: ...&#34;).
+   - Extract activations from the residual stream at layers 20-32 (final third).
+3. **PCA Decomposition**:
+   - Compute mean-centered persona vectors for each persona.
+   - Perform PCA on the aggregated set of persona vectors.
+   - Analyze Explained Variance Ratio (EVR).
+4. **Validation**:
+   - Project &#34;held-out&#34; personas onto the discovered basis and measure reconstruction error.
+   - Use the top PCs as steering vectors in a new prompt to see if they induce the expected &#34;primary&#34; behaviors (e.g., PC1 might correspond to &#34;Positivity&#34; or &#34;Authority&#34;).
+
+### Baselines
+- **Random Directions**: To prove the PCs are non-trivial.
+- **CAA (Mean-Difference) Vectors**: Compare the efficacy of PC vectors vs. trait-specific mean vectors.
+- **Individual Trait Vectors**: See if the shared basis performs as well as specialized vectors.
+
+### Evaluation Metrics
+- **EVR (Explained Variance Ratio)**: Cumulative variance explained by top K components.
+- **Steering Efficacy**: Change in log-probability of persona-matching tokens when steered.
+- **Cosine Similarity**: Between PCs and known trait vectors (e.g., how much does PC1 align with &#34;Extraversion&#34;?).
+
+## Expected Outcomes
+- We expect the first 5-10 PCs to explain &gt;70% of the variance in persona space.
+- We expect PC1 or PC2 to represent a &#34;Positivity/Agreeableness&#34; axis that is shared across many personas.
+- We expect steering with the top PCs to cause broad behavioral shifts consistent with these underlying dimensions.
+
+## Timeline and Milestones
+- **Setup (Phase 2)**: 30 min.
+- **Implementation &amp; Data Prep (Phase 3)**: 60 min.
+- **Experiments &amp; PCA (Phase 4)**: 90 min.
+- **Analysis &amp; Documentation (Phase 5/6)**: 60 min.
+
+## Potential Challenges
+- **Compute Limits**: Extracting activations for many prompts can be slow. *Mitigation*: Use a smaller model (e.g., Llama-2-7b) or fewer prompts.
+- **Prompt Sensitivity**: Activation extraction depends on the prompt. *Mitigation*: Use standardized templates from `repe`.
+
+## Success Criteria
+- Successful identification of a low-rank basis (e.g., 10 PCs explain &gt;70% variance).
+- Demonstration that these PCs can steer model behavior.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          LITERATURE REVIEW
+════════════════════════════════════════════════════════════════════════════════
+
+# Literature Review: Basis Vectors in Persona Space
+
+## Research Area Overview
+The study of persona representations in Large Language Models (LLMs) focuses on how human-like personality traits, ethical views, and social identities are encoded within the model&#39;s internal activations. Recent research has shifted from treating LLMs as monolithic black boxes to identifying specific &#34;directions&#34; or &#34;subspaces&#34; in the residual stream that correspond to these high-level concepts. This field, often called &#34;Representation Engineering&#34; or &#34;Mechanistic Interpretability,&#34; aims to provide mathematical foundations for controllable and interpretable AI personalization.
+
+## Key Papers
+
+### 1. Localizing Persona Representations in LLMs
+- **Authors**: C. Cintas, M. Rateike, E. Miehling, E. Daly, S. Speakman
+- **Year**: 2025
+- **Source**: arXiv:2505.24539
+- **Key Contribution**: Identifies where and how personas are encoded using dimension reduction (PCA).
+- **Methodology**: Extracts activations from the last token of sentences matching specific personas (Big Five, Ethics, Politics). Applies PCA to find separating components.
+- **Results**: Persona representations are most divergent in the **final third of decoder layers** (e.g., layers 22-31 in a 32-layer model). PCA effectively separates matching vs. non-matching behaviors.
+- **Relevance**: Directly supports the hypothesis that PCA on persona vectors reveals primary components in the residual stream.
+
+### 2. The Geometry of Persona: Disentangling Personality from Reasoning
+- **Authors**: Zhixiang Wang
+- **Year**: 2025
+- **Source**: arXiv:2512.07092
+- **Key Contribution**: Proposes the &#34;Soul Engine&#34; framework based on the Linear Representation Hypothesis.
+- **Methodology**: Posits that personality traits exist as **orthogonal linear subspaces**. Uses a dual-head architecture to extract disentangled vectors.
+- **Results**: Achieves robust behavioral control via vector arithmetic ($\vec{v}_{neutral} + \alpha \cdot \vec{v}_{villain}$) without degrading reasoning capabilities.
+- **Relevance**: Provides a geometric framework for &#34;Persona Space&#34; and confirms the effectiveness of linear interventions.
+
+### 3. Activation-Space Personality Steering: Hybrid Layer Selection
+- **Authors**: P. Bhandari, N. Fay, S. Selvaganapathy, et al.
+- **Year**: 2025
+- **Source**: arXiv:2511.03738
+- **Key Contribution**: Discovers that personality traits occupy a **low-rank shared subspace**.
+- **Methodology**: Applies low-rank subspace discovery methods to hidden state activations.
+- **Results**: Identifies optimal layers across architectures for stable trait control. Steering does not impact fluency or general capabilities.
+- **Relevance**: Validates the &#34;low-rank&#34; nature of persona representations, consistent with PCA-based discovery.
+
+### 4. Your Language Model Secretly Contains Personality Subnetworks
+- **Authors**: Ruimeng Ye, Z. Wang, Z. Ling, et al.
+- **Year**: 2026
+- **Source**: arXiv:2602.07164
+- **Key Contribution**: Shows that personas are embedded in lightweight &#34;personality subnetworks.&#34;
+- **Methodology**: Identifies &#34;activation signatures&#34; for different personas and uses them to mask parameters.
+- **Results**: Isolates subnetworks that exhibit stronger persona alignment than prompting-based methods.
+- **Relevance**: Connects activation-level representations (signatures) to parameter-level structures (subnetworks).
+
+### 5. Steering Llama 2 via Contrastive Activation Addition (CAA)
+- **Authors**: Nina Rimsky, et al.
+- **Year**: 2023
+- **Source**: arXiv:2312.06681
+- **Key Contribution**: Introduces CAA for steering model behavior using average activation differences.
+- **Relevance**: Foundational work for activation-level steering, widely used as a baseline.
+
+## Common Methodologies
+- **Activation Extraction**: Capturing the residual stream state, typically at the last token position of a prompt.
+- **Dimension Reduction (PCA)**: Used to find the &#34;basis vectors&#34; that explain the most variance in activations across different persona contexts.
+- **Contrastive Analysis**: Comparing activations from &#34;positive&#34; examples (matching persona) vs. &#34;negative&#34; examples (neutral or opposing persona).
+- **Activation Steering**: Adding or subtracting identified &#34;persona vectors&#34; to the model&#39;s activations during inference to change its behavior.
+
+## Standard Baselines
+- **Prompt Engineering**: Using &#34;You are a [persona]&#34; system prompts.
+- **Contrastive Activation Addition (CAA)**: Adding the mean difference vector.
+- **RepE (Representation Engineering)**: Using the official toolkit&#39;s readers and controllers.
+
+## Gaps and Opportunities
+- **Basis Orthogonality**: While some work posits orthogonality (Wang 2025), the extent to which different persona traits (e.g., &#34;Agreeableness&#34; and &#34;Introversion&#34;) overlap in the residual stream basis is still underexplored.
+- **Dynamics across Layers**: Cintas et al. localized personas to the later layers, but the *transformation* of these representations from early semantic processing to late behavioral expression needs more study.
+- **Universal Basis**: Is there a &#34;universal basis&#34; of persona components that applies across different models, or is it model-specific?
+
+## Recommendations for Our Experiment
+- **Dataset**: Use **SoulBench** for diverse, labeled persona data.
+- **Method**: Extract activations from multiple layers (focusing on layers 20-32). Apply **PCA** to the set of vectors representing different personas.
+- **Analysis**: Check the **Explained Variance Ratio** of the first few PCs to see if persona space is truly low-rank. Visualize the clusters in 2D/3D using the first 2-3 basis vectors.
+- **Steering**: Use the discovered PC vectors as steering directions to verify their causal role.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          PAPER REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+Generate a complete academic paper with the following structure:
+
+1. TITLE
+   - Clear, specific, informative
+   - Should convey main finding or contribution
+
+2. AUTHOR
+   - Use this exact author line in the \author{} block: Ari Holtzman and Idea-Explorer
+
+3. ABSTRACT (150-250 words)
+   - Problem statement
+   - Approach
+   - Key results
+   - Significance
+
+4. INTRODUCTION
+   - Research problem and motivation
+   - Gap in existing work
+   - Our contribution (be specific)
+   - Paper organization
+
+5. RELATED WORK
+   - Organized by theme/approach
+   - Position our work relative to prior work
+   - Cite papers from literature review
+
+6. METHODOLOGY
+   - Clear description of approach
+   - Experimental setup
+   - Datasets used
+   - Evaluation metrics
+   - Baselines
+
+7. RESULTS
+   - Present results with tables and figures
+   - Statistical analysis
+   - Comparison to baselines
+   - Ablation studies (if applicable)
+
+8. DISCUSSION
+   - Interpretation of results
+   - Limitations
+   - Broader implications
+
+9. CONCLUSION
+   - Summary of contributions
+   - Key findings
+   - Future work
+
+10. REFERENCES
+   - BibTeX format
+   - All cited papers
+
+════════════════════════════════════════════════════════════════════════════════
+                          OUTPUT FORMAT
+════════════════════════════════════════════════════════════════════════════════
+
+Create a MODULAR LaTeX project with the following directory structure:
+
+paper_draft/
+├── main.tex              # Main file that imports all sections
+├── references.bib        # BibTeX references
+├── sections/
+│   ├── abstract.tex      # Abstract content
+│   ├── introduction.tex  # Introduction section
+│   ├── related_work.tex  # Related work section
+│   ├── methodology.tex   # Methodology section
+│   ├── results.tex       # Results section
+│   ├── discussion.tex    # Discussion section
+│   └── conclusion.tex    # Conclusion section
+├── figures/              # Directory for any generated figures
+├── tables/               # Directory for complex standalone tables
+└── appendix/             # Directory for appendix sections (if needed)
+
+INSTRUCTIONS:
+1. First, create the directory structure above (mkdir -p paper_draft/sections paper_draft/figures paper_draft/tables paper_draft/appendix)
+2. Write main.tex using the EXACT preamble for NEURIPS:
+
+   \documentclass{article}
+   \usepackage[final]{neurips_2025}  % NEURIPS style (neurips_2025.sty is in paper_draft/)
+   \usepackage[hidelinks]{hyperref}  % REQUIRED: clickable links
+   \usepackage{booktabs}  % REQUIRED: professional tables
+   \usepackage{graphicx}
+   \usepackage{amsmath,amssymb}
+
+   % Import command files
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+   % Use this bibliography style:
+   \bibliographystyle{plainnat}
+
+   \author{Ari Holtzman and Idea-Explorer}
+
+   - Use \input{sections/...} to include each section
+   - Use \bibliography{references} for references
+3. Write each section file with COMPLETE content (no placeholders)
+4. Each section file should include its \section{} command
+5. Write references.bib with all citations in BibTeX format
+6. After writing all files, compile the paper:
+   cd paper_draft && pdflatex -interaction=nonstopmode main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+
+This modular structure allows humans to easily:
+- Edit individual sections without navigating a large file
+- Track changes per section
+- Reuse sections across different paper versions
+
+════════════════════════════════════════════════════════════════════════════════
+                          QUALITY REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+- Academic tone throughout
+- All claims must be supported by data from the experiment report
+- Proper citations using \cite{} commands
+- Clear figures and tables with proper captions
+- NO placeholder text - every section must have real content
+- The paper MUST compile without errors
+- If compilation fails, debug and fix the LaTeX errors
+
+════════════════════════════════════════════════════════════════════════════════
+                          LAB WRITING STYLE
+════════════════════════════════════════════════════════════════════════════════
+
+Follow these lab-specific conventions to match our paper style:
+
+1. LANGUAGE STYLE:
+   - Use active voice: "We propose", "We examine", "We focus on"
+   - Be direct and confident: "Our main question is...", "We hypothesize that..."
+   - State things clearly and simply - prefer plain language over jargon
+   - Use bold questions as paragraph organizers: {\bf what is X?}
+   - Include specific quantitative claims: "8.97% over baseline"
+   - Avoid fancy wording: "utilize" → "use", "facilitate" → "help"
+
+2. INTRODUCTION STRUCTURE:
+   - Engaging hook (get to the point quickly)
+   - Problem importance
+   - Gap identification
+   - Your approach with method figure reference
+   - Quantitative preview of results
+   - Contribution bullets (3-4 items, action verbs)
+
+3. CONTRIBUTION LISTS:
+   \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+       \item We propose...
+       \item We conduct...
+       \item We complement...
+   \end{itemize}
+
+4. MODULAR COMMANDS STRUCTURE:
+   Command templates are pre-copied to paper_draft/commands/:
+   - math.tex: Math notation macros
+   - general.tex: Formatting macros
+   - macros.tex: Project-specific term definitions (customize this for your paper)
+
+   In main.tex, include:
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+5. REFERENCE CONVENTIONS:
+   Use reference macros from math.tex:
+   - \figref{fig:name} for "figure 1" (lowercase, in-sentence)
+   - \Figref{fig:name} for "Figure 1" (capitalized, start of sentence)
+   - \secref{sec:name} for "section 2"
+
+6. TEXT FORMATTING:
+   - Use \para{Header text} for bold paragraph headers
+   - Define method/dataset names with \textsc and \xspace:
+     \newcommand{\methodname}{\textsc{MethodName}\xspace}
+
+7. TABLE FORMATTING:
+   - Use booktabs package (no vertical lines)
+   - Use \resizebox{\textwidth}{!}{...} for wide tables
+   - Use @{} to remove padding at table edges
+   - Use \cmidrule(lr){x-y} for sub-headers
+   - Use \textsc{} for dataset/method names in headers
+   - Bold best results with {\bf ...}
+
+8. FIGURE FORMATTING:
+   - Use 0.32\textwidth for 3-column subfigures
+   - Use 0.95\linewidth for full-width figures
+   - Use \input{figures/legend} for shared legends
+   - Write self-contained captions explaining key observations
+
+9. RESULTS PRESENTATION:
+   - Define \increase and \decrease for colored arrows (green up, red down)
+   - Bold best results in tables
+   - Report confidence intervals when available
+
+10. ALGORITHM STYLING:
+    - Use algpseudocode with [noend]
+    - Use \triangleright for comments
+
+11. HYPERLINKS (REQUIRED):
+    - Always use \usepackage[hidelinks]{hyperref} or with colored links
+    - All citations, section refs, figure refs, table refs must be clickable
+    - This is essential for reader navigation
+
+════════════════════════════════════════════════════════════════════════════════
+                          WORKFLOW: REVIEW AND REFLECT
+════════════════════════════════════════════════════════════════════════════════
+
+Before calling finish, you MUST complete these review steps:
+
+1. REVIEW RESOURCES (at the start):
+   - Read .gemini/skills/paper-writer/SKILL.md for detailed guidance
+   - Study templates/paper_writing/lab_style_guide.md for style conventions
+   - Browse paper_examples/ for formatting and language patterns
+
+2. SELF-REFLECTION (before finishing):
+   After writing all sections, review your work against these criteria:
+
+   LANGUAGE CHECK:
+   - [ ] Is the writing clear and jargon-free?
+   - [ ] Are claims specific with quantitative support?
+   - [ ] Is active voice used throughout?
+
+   FORMATTING CHECK:
+   - [ ] Does main.tex include \input{commands/math}, \input{commands/general}, \input{commands/macros}?
+   - [ ] Is hyperref package included for clickable references?
+   - [ ] Do tables use booktabs (no vertical lines)?
+   - [ ] Are best results bolded in tables?
+   - [ ] Are figures/tables properly captioned?
+
+   STRUCTURE CHECK:
+   - [ ] Does introduction follow: hook → importance → gap → approach → preview → contributions?
+   - [ ] Are contribution bullets specific with action verbs?
+   - [ ] Does the paper compile without errors?
+
+3. FIX ISSUES:
+   - Address any issues found in the self-reflection
+   - Re-compile and verify the PDF looks correct
+
+Only after completing this review should you consider the paper finished.

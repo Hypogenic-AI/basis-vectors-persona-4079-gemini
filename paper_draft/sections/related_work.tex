@@ -1,0 +1,27 @@
+\section{Related Work}
+\label{sec:related_work}
+
+The study of persona representations in Large Language Models (LLMs) has recently transitioned from qualitative behavioral analysis to mechanistic interpretations of their internal activation space. 
+This line of research, often called Representation Engineering (RepE), aims to identify and manipulate specific directions or subspaces in the residual stream that correspond to high-level concepts and traits.
+
+\para{Persona Localization and Representation.} 
+Recent work has localized where and how personas are encoded in the residual stream. 
+Cintas et al. \cite{cintas2025localizing} demonstrated that persona-specific activations, such as those related to the Big Five personality traits or ethical views, are most divergent in the final third of decoder layers. 
+They utilized Principal Component Analysis (	extsc{pca}) on the last token's activations to effectively separate matching versus non-matching behaviors. 
+However, their work focused primarily on identifying where these representations reside rather than decomposing a diverse set of behaviors into a shared set of primary basis vectors.
+
+\para{Geometric Interpretation of Persona Space.} 
+Wang \cite{wang2025geometry} proposed the Soul Engine framework, based on the Linear Representation Hypothesis, which posits that personality traits exist as orthogonal linear subspaces. 
+Their work focused on creating robust behavioral control through vector arithmetic ($\vec{v}_{neutral} + \alpha \cdot \vec{v}_{villain}$) without degrading reasoning capabilities. 
+While Wang's framework suggests a geometric structure, it assumes orthogonality and doesn't explicitly investigate the global decomposition of multiple disparate behaviors across layers. 
+Similarly, Bhandari et al. \cite{bhandari2025activation} discovered that personality traits occupy a low-rank shared subspace, confirming the effectiveness of linear interventions. 
+Our work builds on these findings by performing a global 	extsc{pca} on a wide variety of behavioral datasets to identify the most primary basis vectors that govern persona space.
+
+\para{Activation-Level Steering.} 
+Rimsky et al. \cite{rimsky2023steering} introduced Contrastive Activation Addition (\caa) for steering model behavior using the average difference vector between positive and negative activation pairs. 
+This method has become a foundational baseline for activation-level interventions. 
+Ye et al. \cite{ye2026your} further showed that personas are embedded in lightweight personality subnetworks, connecting activation signatures to parameter-level structures. 
+Unlike these works, which primarily focus on steering specific traits, we aim to uncover the underlying basis vectors that explain the variance across multiple traits and validate their causal influence as general steering directions.
+
+In contrast to prior work, we analyze the global geometry of persona representations across diverse behavioral domains, uncovering a unified ``Social-Self'' axis that explains more than half of the variance in the middle layers of the residual stream. 
+Our layer-wise analysis also provides new insights into how these representations dissipate and specialize as they progress through the model's layers.

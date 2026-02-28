@@ -1,0 +1,14 @@
+PDF: papers/2512.07092v1_geometry_of_persona.pdf
+Total pages: 9
+Pages per chunk: 1
+
+Chunks:
+  2512.07092v1_geometry_of_persona_chunk_001.pdf: page 1
+  2512.07092v1_geometry_of_persona_chunk_002.pdf: page 2
+  2512.07092v1_geometry_of_persona_chunk_003.pdf: page 3
+  2512.07092v1_geometry_of_persona_chunk_004.pdf: page 4
+  2512.07092v1_geometry_of_persona_chunk_005.pdf: page 5
+  2512.07092v1_geometry_of_persona_chunk_006.pdf: page 6
+  2512.07092v1_geometry_of_persona_chunk_007.pdf: page 7
+  2512.07092v1_geometry_of_persona_chunk_008.pdf: page 8
+  2512.07092v1_geometry_of_persona_chunk_009.pdf: page 9

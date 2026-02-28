@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "stages": {
+    "resource_finder": {
+      "success": true,
+      "completion_marker": "/workspaces/basis-vectors-persona-4079-gemini/.resource_finder_complete",
+      "outputs": {
+        "literature_review": "/workspaces/basis-vectors-persona-4079-gemini/literature_review.md",
+        "resources_catalog": "/workspaces/basis-vectors-persona-4079-gemini/resources.md",
+        "papers_dir": "/workspaces/basis-vectors-persona-4079-gemini/papers",
+        "datasets_dir": "/workspaces/basis-vectors-persona-4079-gemini/datasets",
+        "code_dir": "/workspaces/basis-vectors-persona-4079-gemini/code"
+      },
+      "log_file": "/workspaces/basis-vectors-persona-4079-gemini/logs/resource_finder_gemini.log",
+      "transcript_file": "/workspaces/basis-vectors-persona-4079-gemini/logs/resource_finder_gemini_transcript.jsonl",
+      "elapsed_time": 836.3943746089935
+    },
+    "experiment_runner": {
+      "success": true,
+      "return_code": 0,
+      "elapsed_time": 597.835905790329,
+      "log_file": "/workspaces/basis-vectors-persona-4079-gemini/logs/execution_gemini.log",
+      "transcript_file": "/workspaces/basis-vectors-persona-4079-gemini/logs/execution_gemini_transcript.jsonl"
+    }
+  },
+  "work_dir": "/workspaces/basis-vectors-persona-4079-gemini"
+}

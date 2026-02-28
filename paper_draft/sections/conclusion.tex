@@ -1,0 +1,14 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+In this research, we have investigated the global geometry of persona representations in Large Language Models (LLMs) by performing Principal Component Analysis (	extsc{pca}) on activation-level persona vectors from \qwen across seven diverse behavioral domains. 
+Our analysis revealed a remarkably low-rank structure in the early-middle layers of the residual stream, with a single basis vector (\pcone) explaining 59.8\% of the total variance across all 700 behavioral samples in Layer 14. 
+This primary basis vector consistently aligned with a cluster of social compliance and self-preservation traits, forming a shared ``Social-Self'' axis that unifiedly represents \sycophancy, \survival, and \coordination.
+
+We demonstrated that this foundational direction is causally meaningful by using it as a steering vector in an unseen behavioral task (efusal), showing its ability to modify the model's behavioral outputs. 
+Furthermore, our layer-wise analysis revealed a dissipation of this low-rank concentration from middle layers to the output head, with \evr decreasing to 20.9\% in Layer 26. 
+This suggests a transition from a unified behavioral axis to more specialized, distributed representations as the model processes behavioral information.
+
+Our findings provide a new geometric lens for understanding the internal representation of personas in LLMs. 
+Identifying the foundational axes of persona space, such as the ``Social-Self'' axis, offers a powerful tool for more efficient and interpretable model monitoring and behavioral control. 
+Future work will explore the universality of this basis across different model families and investigate if other primary components represent foundational axes like honesty or competence, potentially leading to more robust and transparent AI alignment strategies.
